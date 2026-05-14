@@ -26,6 +26,7 @@ btn.onclick = () => {
     if (flag) {
         users.push(newUser);
         localStorage.setItem('userlist', JSON.stringify(users));
+        console.log(`${name}注册成功`);
         alert("注册成功");
         window.location.href = "./login.html";
     }
