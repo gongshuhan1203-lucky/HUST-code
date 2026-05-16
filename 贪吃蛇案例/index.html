@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        #main {
+            width: 360px;
+            height: 420px;
+            border: 10px solid #000;
+            background-color: #b7d4a8;
+            border-radius: 20px;
+            margin: 50px auto;
+        }
+
+        #stage {
+            width: 304px;
+            height: 304px;
+            border: 2px solid #000;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        #info {
+            width: 304px;
+            height: 304px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            font: bold 20px courier;
+        }
+
+        #food {
+            width: 10px;
+            height: 10px;
+            position: absolute;
+            background-color: aliceblue;
+            top: 100px;
+            left: 120px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        #food>div {
+            width: 5px;
+            height: 5px;
+            background-color: #000;
+            transform: rotate(45deg);
+        }
+
+        #snake>div {
+            width: 10px;
+            height: 10px;
+            background-color: #000;
+            border: 1px solid #b7d4a8;
+            position: absolute;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="main">
+        <div id="stage">
+
+            <div id="snake">
+                <div></div>
+            </div>
+
+            <div id="food">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+        <div id="info">
+            <div>SCORE:<span id="score">0</span></div>
+            <div>LEVEL:<span id="level">1</span></div>
+        </div>
+    </div>
+
+    <script>
+
+        // 获取蛇的容器
+        const snake = document.getElementById('snake')
+        // 获取蛇的各个部分
+        const snakes = snake.getElementsByTagName('div')
+        // 蛇头
+        const head = snakes[0]
+        // 食物 坐标0-290之间 且为10的倍数 随机生成
+        const food = document.getElementById('food')
+        // 获取分数和level和span
+        const scoreSpan = document.getElementById('score')
+        const levelSpan = document.getElementById('level')
+        // 创建变量存储分数和等级
+        let score = 0
+        let level = 0
+
+        function changeFood() {
+            // 生成0-29的随机数
+            const x = Math.floor(Math.random() * 30) * 10
+            const y = Math.floor(Math.random() * 30) * 10
+
+            // 设置食物坐标
+            food.style.left = x + "px"
+            food.style.top = y + "px"
+        }
+
+        // changeFood()
+        /* 
+            绑定按键事件 keydown keyup
+                - 键盘事件只能绑定给可以获取焦点的元素 或者 是document   如 input radio 超链接
+                - 当我们按着某个按键不松开时，按键按下事件会持续触发
+        */
+        /*
+            当我们按着某个按键不松开时，按键按下事件会持续触发
+                但是第一次和第二次触发的间隔会比较长这样导致练习中蛇不能流畅的移动
+                贪食蛇的游戏，蛇是不能停止运动的
+        */
+
+        // 设置方向
+        let dir
+
+        const reobj = {
+            w: "s",
+            s: "w",
+            a: "d",
+            d: "a"
+        }
+        let keyActive = true
+        const keyArr = ['w', 's', 'a', 'd']
+        document.addEventListener('keydown', (event) => {
+            /*通过事件对象获取用户按的按键*/
+            if (keyActive && keyArr.includes(event.key)) {
+                if (snakes.length < 2 || reobj[dir] !== event.key) {
+                    dir = event.key
+                    keyActive = false
+                }
+            }
+        })
+
+
+        let isGameOver = false
+
+        setTimeout(function move() {
+            // 获取蛇头
+            const head = snakes[0]
+            // 获取蛇头坐标
+            let x = head.offsetLeft
+            let y = head.offsetTop
+
+            switch (dir) {
+                case 'w':
+                    y -= 10
+                    break
+                case 's':
+                    y += 10
+                    break
+                case 'a':
+                    x -= 10
+                    break
+                case 'd':
+                    x += 10
+                    break;
+            }
+            // 检测是否吃到食物
+            if (food.offsetTop === head.offsetTop && food.offsetLeft === head.offsetLeft) {
+                // 改变食物位置
+                // 增加蛇身体 
+                changeFood() // 吃到食物后就改变食物位置 避免第一次随机位置到蛇头位置
+                snake.insertAdjacentHTML("beforeend", "<div></div>")
+                score++
+                scoreSpan.textContent = score
+
+
+                // 检查等级
+                if (score % 3 === 0 && level < 14) {
+                    level++
+                    levelSpan.textContent = level + 1
+                }
+            }
+
+
+            // 游戏结束 撞墙 撞自己
+            // 撞墙
+            if (x < 0 || x > 290 || y < 0 || y > 290) {
+                alert('撞墙！游戏结束！')
+                return
+            }
+
+            // 撞到自己
+
+            for (let i = 0; i < snakes.length - 1; i++) {
+                if (x === snakes[i].offsetLeft && y === snakes[i].offsetTop) {
+                    alert('撞到自己！游戏结束！')
+                    return
+                }
+            }
+
+            // 获取蛇尾 
+            const tail = snakes[snakes.length - 1]
+            // 修改蛇尾坐标
+            tail.style.left = x + "px"
+            tail.style.top = y + "px"
+            // 修改现在的头的位置
+            snake.insertAdjacentElement("afterbegin", tail)
+
+            keyActive = true
+
+            setTimeout(move, 300 - level * 20)
+        }, 300)
+    </script>
+</body>
+
+</html>
